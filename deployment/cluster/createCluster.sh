@@ -20,7 +20,7 @@ else
 echo "${YELLOW}Cluster does not exists"
 echo "${GREEN} !!Create a eks cluster !!"
 
-eksctl create cluster --name ${CLUSTER_NAME} --region ${AWS_REGION} --version ${K8sversion} --tags karpenter.sh/discovery=${CLUSTER_NAME}
+eksctl create cluster --name ${CLUSTER_NAME} --region ${AWS_REGION} --version ${K8sversion}  --instance-types=t2.small --tags karpenter.sh/discovery=${CLUSTER_NAME}
 #aws eks describe-cluster --region ${AWS_REGION} --name ${CLUSTER_NAME} --query "cluster.status"
 
 fi

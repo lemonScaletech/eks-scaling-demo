@@ -11,7 +11,7 @@ export CLUSTER_NAME="eks-demo-scale"
 export K8sversion="1.28"
 
 #Karpenter Variables
-export KARPENTER_VERSION=v0.32.0
+export KARPENTER_VERSION=v0.33.1
 
 #KEDA Variables
 export NAMESPACE=keda

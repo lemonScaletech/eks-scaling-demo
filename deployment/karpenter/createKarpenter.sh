@@ -63,7 +63,6 @@ eksctl create iamserviceaccount \
   --cluster "${CLUSTER_NAME}" --name karpenter --namespace karpenter \
   --role-name "Karpenter-${CLUSTER_NAME}" \
   --attach-policy-arn "arn:aws:iam::${ACCOUNT_ID}:policy/KarpenterControllerPolicy-${CLUSTER_NAME}" \
-  --role-only \
   --approve
 
 export KARPENTER_IAM_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/Karpenter-${CLUSTER_NAME}"
@@ -78,12 +77,10 @@ export CLUSTER_ENDPOINT="$(aws eks describe-cluster --name ${CLUSTER_NAME} --que
 
 helm registry logout public.ecr.aws
 
-helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter --namespace karpenter --create-namespace \
-  --version ${KARPENTER_VERSION} \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=${KARPENTER_IAM_ROLE_ARN} \
-  --set settings.aws.clusterName=${CLUSTER_NAME} \
-  --set settings.aws.defaultInstanceProfile=KarpenterNodeInstanceProfile-${CLUSTER_NAME} \
-  --set settings.aws.interruptionQueueName=${CLUSTER_NAME} \
+helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter --version ${KARPENTER_VERSION} --namespace karpenter --create-namespace \
+    --set logLevel=debug \
+  --set settings.clusterName=${CLUSTER_NAME} \
+  --set settings.interruptionQueueName=${CLUSTER_NAME} \
   --set controller.resources.requests.cpu=1 \
   --set controller.resources.requests.memory=1Gi \
   --set controller.resources.limits.cpu=1 \
@@ -107,7 +104,7 @@ spec:
           values: ["spot"]
         - key: node.kubernetes.io/instance-type
           operator: In
-          values: ["t2.medium", "t2.small"]
+          values: ["t3.medium", "t3.small"]
       nodeClassRef:
         name: default
   limits:
@@ -131,8 +128,10 @@ spec:
         karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
 EOF
 
-fi
+
 echo "${GREEN}=========================="
 echo "${GREEN}Karpenter Completed"
 echo "${GREEN}=========================="
+fi
+
 fi

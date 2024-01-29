@@ -1,6 +1,6 @@
 echo "=====Deploy KEDA VALUES.sh===="
 
-cat >./deployment/keda/value.yaml <<EOF
+cat >./deployment/keda/values.yaml <<EOF
 image:
   keda:
     repository: ghcr.io/kedacore/keda

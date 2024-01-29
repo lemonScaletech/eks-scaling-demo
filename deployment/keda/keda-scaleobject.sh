@@ -1,7 +1,7 @@
 
 echo "=====Deploy KEDA Scale Object===="
 
-cat >./deployment/keda/kedaScaleObject.yaml <<EOF
+cat >./deployment/keda/keda-scaleobject.yaml <<EOF
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:

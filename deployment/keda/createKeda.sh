@@ -95,7 +95,7 @@ echo "${CYAN}Install Keda using helm"
 helm repo add kedacore https://kedacore.github.io/charts
 helm repo update
 kubectl create namespace keda
-helm install keda kedacore/keda --values ./deployment/keda/value.yaml --namespace keda
+helm install keda kedacore/keda --values ./deployment/keda/values.yaml --namespace keda
 
 echo "${CYAN}=== Deploy KEDA Scaleobject ==="
 ./deployment/keda/keda-scaleobject.sh
@@ -145,7 +145,7 @@ EOF
 
 # Clean temporary config file created by script, to save from future conflicts
 echo "${RED}Deleting files value.yaml, kedaScaleObject.yaml, trust-relationship.json"
-rm -f ./deployment/keda/value.yaml
+rm -f ./deployment/keda/values.yaml
 rm -f ./deployment/keda/kedaScaleObject.yaml
 rm -f ./deployment/keda/trust-relationship.json
 
