@@ -3,7 +3,7 @@
 #******************
 echo "${BLUE} Start deploying Dynamo & SQS"
 
-source ./deployment/env.sh
+source ./deployment/environmentVariables.sh
 
 
 echo "${GREEN} Deploy Dynamo"

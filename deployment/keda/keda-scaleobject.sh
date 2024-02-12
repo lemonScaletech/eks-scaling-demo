@@ -1,7 +1,7 @@
 
 echo "=====Deploy KEDA Scale Object===="
 
-cat >./deployment/keda/keda-scaleobject.yaml <<EOF
+cat >./deployment/keda/kedaScaleObject.yaml <<EOF
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -11,7 +11,7 @@ spec:
   scaleTargetRef:
     name: ${SQS_TARGET_DEPLOYMENT}     #K8s deployement to target
   minReplicaCount: 1  # We don't want pods if the queue is empty nginx-deployment
-  maxReplicaCount: 200  # We don't want to have more than 15 replicas
+  maxReplicaCount: 2000  # We don't want to have more than 15 replicas
   pollingInterval: 30 # How frequently we should go for metrics (in seconds)
   cooldownPeriod:  10 # How many seconds should we wait for downscale
   triggers:

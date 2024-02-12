@@ -5,7 +5,7 @@
 echo "${GREEN}=========================="
 echo "${GREEN}Deploy KEDA"
 echo "${GREEN}=========================="
-source ./deployment/env.sh
+source ./deployment/environmentVariables.sh
 
 echo "${RED} Keda will be deployed on cluster $(kubectl config current-context) \n ${RED}Casesenstive ${BLUE}Press Y = Proceed or N = Cancel (change context and run script)"
 read user_input
@@ -17,7 +17,7 @@ OIDC_PROVIDER=$(aws eks describe-cluster --name ${CLUSTER_NAME} --region ${AWS_R
 echo "${CYAN}This deployment will target AWS SQS trigger for keda"
 
 if [ -z $CLUSTER_NAME ] ||  [ -z $AWS_REGION ] || [ -z $IAM_KEDA_SQS_POLICY ] || [ -z $IAM_KEDA_DYNAMO_POLICY ] || [ -z $ACCOUNT_ID ] || [ -z $TEMPOUT ] || [ -z $OIDC_PROVIDER ] || [ -z $IAM_KEDA_ROLE ] || [ -z $SERVICE_ACCOUNT ] || [ -z $NAMESPACE ] || [ -z $SQS_TARGET_NAMESPACE ] || [ -z $SQS_TARGET_DEPLOYMENT ] || [ -z $SQS_QUEUE_URL ];then
-echo "${RED}Update values & Run env.sh file"
+echo "${RED}Update values & Run environmentVariables.sh file"
 exit 1;
 else
 
@@ -89,19 +89,17 @@ kubectl annotate serviceaccount -n keda-test keda-service-account eks.amazonaws.
 
 #Deploy KEDA value
 echo "=== Deploy KEDA VALUES ==="
-chmod u+x ./deployment/keda/values.sh
 ./deployment/keda/values.sh
 #Install KEDA with helm
 echo "${CYAN}Install Keda using helm"
 helm repo add kedacore https://kedacore.github.io/charts
 helm repo update
 kubectl create namespace keda
-helm install keda kedacore/keda --values ./deployment/keda/values.yaml --namespace keda
+helm install keda kedacore/keda --values ./deployment/keda/value.yaml --namespace keda
 
 echo "${CYAN}=== Deploy KEDA Scaleobject ==="
-chmod u+x ./deployment/keda/keda-scaleobject.sh
 ./deployment/keda/keda-scaleobject.sh
-kubectl apply -f ./deployment/keda/keda-scaleobject.yaml
+kubectl apply -f ./deployment/keda/kedaScaleObject.yaml
 
 # deploy the application to read queue
 echo "${CYAN}Deploy application to read SQS"
@@ -111,9 +109,10 @@ cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sqs-reader
+  name: sqs-app
   namespace: keda-test
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: sqs-reader
@@ -122,16 +121,9 @@ spec:
       labels:
         app: sqs-reader
     spec:
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: "topology.kubernetes.io/zone"
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app: sqs-reader
       serviceAccountName: keda-service-account
       containers:
-      - name: sqs-reader
+      - name: sqs-pull-app
         image: khanasif1/sqs-reader:v0.12
         imagePullPolicy: Always
         env:
@@ -146,19 +138,19 @@ spec:
             memory: "32Mi"
             cpu: "125m"
           limits:
-            memory: "64Mi"
-            cpu: "250m"
+            memory: "128Mi"
+            cpu: "500m"
 EOF
 
 
 # Clean temporary config file created by script, to save from future conflicts
-echo "${RED}Deleting files value.yaml, keda-scaleobject.yaml, trust-relationship.json"
-rm -f ./deployment/keda/values.yaml
-rm -f ./deployment/keda/keda-scaleobject.yaml
+echo "${RED}Deleting files value.yaml, kedaScaleObject.yaml, trust-relationship.json"
+rm -f ./deployment/keda/value.yaml
+rm -f ./deployment/keda/kedaScaleObject.yaml
 rm -f ./deployment/keda/trust-relationship.json
 
-fi
 echo "${GREEN}=========================="
 echo "${GREEN}KEDA Completed"
 echo "${GREEN}=========================="
+fi
 fi

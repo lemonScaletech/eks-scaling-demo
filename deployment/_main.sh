@@ -1,73 +1,32 @@
-#******************
-# Chain Deployment
-#******************
-source ./deployment/env.sh
+#!/bin/bash
+echo "Setting environment variables"
+#Shared Variables
+export AWS_REGION="us-west-1"
+export ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
+export TEMPOUT=$(mktemp)
+export DYNAMODB_TABLE="payments"
 
-echo "${BLUE}Please check the details before proceeding \n AWS Account: ${ACCOUNT_ID} \n AWS Region for deployment : ${AWS_REGION} \n
-${RED}Please check the Karpenter version you have selected is available at \n\n  https://karpenter.sh \n\nAlso please check #Experiencing Issues# section before proceeding.  \n
-${RED}Casesenstive ${BLUE}Press Y = Proceed or N = Cancel"
-echo "${CYAN}Response: "
-read user_input
-Entry='Y'
-if [[ "$user_input" == *"$Entry"* ]]; then
-    CLUSTER=1
-    CLUSTER_KARPENTER=2
-    CLUSTER_KARPENTER_KEDA=3
+#Cluster Variables
+export CLUSTER_NAME="eks-demo-scale"
+export K8sversion="1.28"
 
-    echo "${BLUE} Please select the deployment modules : \n 1. Press 1 to deploy only EKS cluster \n 2. Press 2 to deploy EKS cluster with Karpenter \n 3. Press 3 if you want to deploy EKS cluster, Karpenter & KEDA"
-    echo "${CYAN}Response: "
-    read user_input
-    if [[ "$user_input" == $CLUSTER ]]; then
-        echo "Deploy EKS"
-        echo "${GREEN} Proceed deployment"
-        echo "Cluster!!"
-        echo "${YELLOW}print cluster Parameters \n"
-        echo $CLUSTER_NAME  "|" $KARPENTER_VERSION  "|" $AWS_REGION "|"  $ACCOUNT_ID "|"  $TEMPOUT
-        chmod u+x ./deployment/cluster/createCluster.sh
-        ./deployment/cluster/createCluster.sh
+#Karpenter Variables
+export KARPENTER_VERSION=v0.33.1
 
-    elif [[ "$user_input" == $CLUSTER_KARPENTER ]]; then
-        echo "Deploy EKS & Karpenter"
-        echo "${GREEN} Proceed deployment"
-        echo "Cluster!!"
-        echo "${YELLOW}print cluster Parameters \n"
-        echo $CLUSTER_NAME  "|" $KARPENTER_VERSION  "|" $AWS_REGION "|"  $ACCOUNT_ID "|"  $TEMPOUT
-        chmod u+x ./deployment/cluster/createCluster.sh
-        ./deployment/cluster/createCluster.sh
+#KEDA Variables
+export NAMESPACE=keda
+export SERVICE_ACCOUNT=keda-service-account
+export IAM_KEDA_ROLE="keda-demo-role"
+export IAM_KEDA_SQS_POLICY="keda-demo-sqs"
+export IAM_KEDA_DYNAMO_POLICY="keda-demo-dynamo"
+export SQS_QUEUE_NAME="keda-demo-queue.fifo"
+export SQS_QUEUE_URL="https://sqs.${AWS_REGION}.amazonaws.com/${ACCOUNT_ID}/${SQS_QUEUE_NAME}"
+export SQS_TARGET_DEPLOYMENT="sqs-app"
+export SQS_TARGET_NAMESPACE="keda-test"
 
-        echo "${GREEN}Karpenter!!"
-        echo "${YELLOW}print karpenter Parameters \n"
-        echo $CLUSTER_NAME "|"  $KARPENTER_VERSION  "|" $AWS_REGION  "|" $ACCOUNT_ID  "|" $TEMPOUT
-        chmod u+x ./deployment/karpenter/createKarpenter.sh
-        ./deployment/karpenter/createKarpenter.sh
-
-    elif [[ "$user_input" == $CLUSTER_KARPENTER_KEDA ]]; then
-        echo "Deploy EKS & Karpenter & KEDA"
-        echo "${GREEN} Proceed deployment"
-        echo "Cluster!!"
-        echo "${YELLOW}print cluster Parameters \n"
-        echo $CLUSTER_NAME  "|" $KARPENTER_VERSION  "|" $AWS_REGION "|"  $ACCOUNT_ID "|"  $TEMPOUT
-        chmod u+x ./deployment/cluster/createCluster.sh
-        ./deployment/cluster/createCluster.sh
-
-        echo "${GREEN}Karpenter!!"
-        echo "${YELLOW}print karpenter Parameters \n"
-        echo $CLUSTER_NAME "|"  $KARPENTER_VERSION  "|" $AWS_REGION  "|" $ACCOUNT_ID  "|" $TEMPOUT
-        chmod u+x ./deployment/karpenter/createKarpenter.sh
-        ./deployment/karpenter/createKarpenter.sh
-
-        echo "${GREEN}KEDA!!"
-        echo "${YELLOW}print keda Parameters"
-        echo $CLUSTER_NAME "||\n"  $AWS_REGION "||\n"  $ACCOUNT_ID  "||\n" $TEMPOUT  "||\n"  $IAM_KEDA_ROLE  "||\n" $IAM_KEDA_SQS_POLICY  "||\n" $SERVICE_ACCOUNT  "||\n" $NAMESPACE  "||\n" $SQS_TARGET_NAMESPACE "||\n"  $SQS_TARGET_DEPLOYMENT "||\n"  $SQS_QUEUE_URL
-        chmod u+x ./deployment/keda/createKeda.sh
-        ./deployment/keda/createKeda.sh
-
-        echo "${GREEN}Deploy Demo components DynamoDB and SQS!!"
-        chmod u+x ./deployment/services/awsService.sh
-        ./deployment/services/awsService.sh
-
-    fi
-else
-
-    echo "${RED}Cancel deployment"
-fi
+# echo colour
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+CYAN=$(tput setaf 6)
+BLUE=$(tput setaf 4)
+NC=$(tput sgr0)

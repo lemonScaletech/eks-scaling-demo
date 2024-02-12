@@ -5,10 +5,10 @@
 echo "${GREEN}=========================="
 echo "${GREEN}Installing Cluster"
 echo "${GREEN}=========================="
-source ./deployment/env.sh
+source ./deployment/environmentVariables.sh
 
 if [ -z $CLUSTER_NAME ] || [ -z $KARPENTER_VERSION ] || [ -z $AWS_REGION ] || [ -z $ACCOUNT_ID ] || [ -z $TEMPOUT ];then
-echo "${RED}Update values & Run env.sh file"
+echo "${RED}Update values & Run environmentVariables.sh file"
 exit 1;
 else
 echo "${GREEN}**Start cluster provisioning**"
@@ -20,7 +20,7 @@ else
 echo "${YELLOW}Cluster does not exists"
 echo "${GREEN} !!Create a eks cluster !!"
 
-eksctl create cluster --name ${CLUSTER_NAME} --region ${AWS_REGION} --version ${K8sversion}  --instance-types=t3.xlarge --nodes 2 --tags karpenter.sh/discovery=${CLUSTER_NAME}
+eksctl create cluster --name ${CLUSTER_NAME} --region ${AWS_REGION} --version ${K8sversion} --tags karpenter.sh/discovery=${CLUSTER_NAME}
 #aws eks describe-cluster --region ${AWS_REGION} --name ${CLUSTER_NAME} --query "cluster.status"
 
 fi
