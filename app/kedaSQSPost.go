@@ -38,7 +38,7 @@ func sendMessage(messageBody map[string]interface{}) {
 	input := &sqs.SendMessageInput{
 		QueueUrl:       &queueURL,
 		MessageBody:    aws.String(string(messageBodyJSON)),
-		MessageGroupId: aws.String("messageGroup1"),
+		MessageGroupId: aws.String("messageGroup"),
 	}
 
 	result, err := sqsClient.SendMessage(input)
