@@ -89,6 +89,7 @@ kubectl annotate serviceaccount -n keda-test keda-service-account eks.amazonaws.
 
 #Deploy KEDA value
 echo "=== Deploy KEDA VALUES ==="
+chmod u+x ./deployment/keda/values.sh
 ./deployment/keda/values.sh
 #Install KEDA with helm
 echo "${CYAN}Install Keda using helm"
@@ -98,8 +99,9 @@ kubectl create namespace keda
 helm install keda kedacore/keda --values ./deployment/keda/values.yaml --namespace keda
 
 echo "${CYAN}=== Deploy KEDA Scaleobject ==="
+chmod u+x ./deployment/keda/keda-scaleobject.sh
 ./deployment/keda/keda-scaleobject.sh
-kubectl apply -f ./deployment/keda/kedaScaleObject.yaml
+kubectl apply -f ./deployment/keda/keda-scaleobject.yaml
 
 # deploy the application to read queue
 echo "${CYAN}Deploy application to read SQS"
@@ -109,10 +111,9 @@ cat <<EOF | kubectl apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sqs-app
+  name: sqs-reader
   namespace: keda-test
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: sqs-reader
@@ -121,9 +122,16 @@ spec:
       labels:
         app: sqs-reader
     spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: "topology.kubernetes.io/zone"
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: sqs-reader
       serviceAccountName: keda-service-account
       containers:
-      - name: sqs-pull-app
+      - name: sqs-reader
         image: khanasif1/sqs-reader:v0.12
         imagePullPolicy: Always
         env:
@@ -138,15 +146,15 @@ spec:
             memory: "32Mi"
             cpu: "125m"
           limits:
-            memory: "128Mi"
-            cpu: "500m"
+            memory: "64Mi"
+            cpu: "250m"
 EOF
 
 
 # Clean temporary config file created by script, to save from future conflicts
-echo "${RED}Deleting files value.yaml, kedaScaleObject.yaml, trust-relationship.json"
+echo "${RED}Deleting files value.yaml, keda-scaleobject.yaml, trust-relationship.json"
 rm -f ./deployment/keda/values.yaml
-rm -f ./deployment/keda/kedaScaleObject.yaml
+rm -f ./deployment/keda/keda-scaleobject.yaml
 rm -f ./deployment/keda/trust-relationship.json
 
 fi

@@ -26,6 +26,7 @@ docker logout public.ecr.aws
 #Create the KarpenterNode IAM Role
 echo "${GREEN}Create the KarpenterNode IAM Role"
 
+
 curl -fsSL https://karpenter.sh/docs/getting-started/getting-started-with-karpenter/cloudformation.yaml  > $TEMPOUT \
 && aws cloudformation deploy \
   --stack-name "Karpenter-${CLUSTER_NAME}" \
@@ -38,9 +39,25 @@ curl -fsSL https://karpenter.sh/docs/getting-started/getting-started-with-karpen
 #grant access to instances using the profile to connect to the cluster. This command adds the Karpenter node role to your
 # aws-auth configmap, allowing nodes with this role to connect to the cluster.
 
+aws iam update-assume-role-policy \
+  --role-name KarpenterNodeRole-${CLUSTER_NAME} \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "Service": "ec2.amazonaws.com"
+        },
+        "Action": "sts:AssumeRoleWithWebIdentity"
+      }
+    ]
+  }'
+
+
 eksctl create iamidentitymapping \
   --username system:node:{{EC2PrivateDNSName}} \
-  --cluster  ${CLUSTER_NAME} \
+  --cluster ${CLUSTER_NAME} \
   --arn "arn:aws:iam::${ACCOUNT_ID}:role/KarpenterNodeRole-${CLUSTER_NAME}" \
   --group system:bootstrappers \
   --group system:nodes
@@ -53,16 +70,17 @@ kubectl describe configmap -n kube-system aws-auth
 echo "Create KarpenterController IAM Role"
 
 #Setup IAM OIDC provider for a cluster to enable IAM roles for pods
-eksctl utils associate-iam-oidc-provider --cluster ${CLUSTER_NAME} --approve
+eksctl utils associate-iam-oidc-provider --cluster=${CLUSTER_NAME} --approve
 
 #Karpenter requires permissions like launching instances. This will create an AWS IAM Role, Kubernetes service account,
 #and associate them using IAM Roles for Service Accounts (IRSA)
 echo "Map AWS IAM Role  Kubernetes service account"
 
 eksctl create iamserviceaccount \
-  --cluster "${CLUSTER_NAME}" --name karpenter --namespace karpenter \
-  --role-name "Karpenter-${CLUSTER_NAME}" \
-  --attach-policy-arn "arn:aws:iam::${ACCOUNT_ID}:policy/KarpenterControllerPolicy-${CLUSTER_NAME}" \
+  --cluster="${CLUSTER_NAME}" --name="karpenter" --namespace="karpenter" \
+  --role-name="Karpenter-${CLUSTER_NAME}" \
+  --attach-policy-arn="arn:aws:iam::${ACCOUNT_ID}:policy/KarpenterControllerPolicy-${CLUSTER_NAME}" \
+  --override-existing-serviceaccounts \
   --approve
 
 export KARPENTER_IAM_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/Karpenter-${CLUSTER_NAME}"
@@ -76,16 +94,29 @@ echo "Helm Install Karpenter"
 export CLUSTER_ENDPOINT="$(aws eks describe-cluster --name ${CLUSTER_NAME} --query "cluster.endpoint" --output text)"
 
 helm registry logout public.ecr.aws
+helm repo add karpenter https://charts.karpenter.sh/
+helm repo update
 
-helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter --version ${KARPENTER_VERSION} --namespace karpenter --create-namespace \
-    --set logLevel=debug \
+helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter --version "${KARPENTER_VERSION}" --create-namespace --namespace "karpenter" \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=${KARPENTER_IAM_ROLE_ARN} \
   --set settings.clusterName=${CLUSTER_NAME} \
+  --set settings.defaultInstanceProfile=KarpenterNodeInstanceProfile-${CLUSTER_NAME} \
   --set settings.interruptionQueueName=${CLUSTER_NAME} \
+  --set app.kubernetes.io/managed-by="Helm" \
   --set controller.resources.requests.cpu=1 \
   --set controller.resources.requests.memory=1Gi \
   --set controller.resources.limits.cpu=1 \
   --set controller.resources.limits.memory=1Gi \
   --wait
+
+#helm upgrade --install --create-namespace --namespace "karpenter" \
+#  karpenter karpenter/karpenter \
+#  --version "${KARPENTER_VERSION}" \
+#  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=${KARPENTER_IAM_ROLE_ARN} \
+#  --set clusterName=${CLUSTER_NAME} \
+#  --set clusterEndpoint=${CLUSTER_ENDPOINT} \
+#  --set aws.defaultInstanceProfile=KarpenterNodeInstanceProfile-${CLUSTER_NAME} \
+#  --wait
 
 # deploy Provisioner & AWSNodeTemplate
 # https://karpenter.sh/docs/concepts/nodepools/
@@ -94,24 +125,23 @@ cat <<EOF | envsubst | kubectl apply -f -
 apiVersion: karpenter.sh/v1beta1
 kind: NodePool
 metadata:
-  name: default
+  name: load-test
 spec:
   template:
     spec:
       requirements:
         - key: karpenter.sh/capacity-type
-          operator: NotIn
-          values: ["spot"]
-        - key: node.kubernetes.io/instance-type
           operator: In
-          values: ["t3.medium", "t3.small"]
+          values: ["spot"]
       nodeClassRef:
+        apiVersion: karpenter.k8s.aws/v1beta1
+        kind: EC2NodeClass
         name: default
   limits:
-    cpu: 700
+    cpu: 3000
   disruption:
     consolidationPolicy: WhenUnderutilized
-    expireAfter: 720h # 30 * 24h = 720h
+    expireAfter: 24h
 ---
 apiVersion: karpenter.k8s.aws/v1beta1
 kind: EC2NodeClass

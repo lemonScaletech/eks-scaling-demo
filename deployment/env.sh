@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "Setting environment variables"
 #Shared Variables
-export AWS_REGION="ap-south-1"
+export AWS_REGION="us-east-1"
 export ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 export TEMPOUT=$(mktemp)
 export DYNAMODB_TABLE="payments"
@@ -21,7 +21,7 @@ export IAM_KEDA_SQS_POLICY="keda-demo-sqs"
 export IAM_KEDA_DYNAMO_POLICY="keda-demo-dynamo"
 export SQS_QUEUE_NAME="keda-demo-queue.fifo"
 export SQS_QUEUE_URL="https://sqs.${AWS_REGION}.amazonaws.com/${ACCOUNT_ID}/${SQS_QUEUE_NAME}"
-export SQS_TARGET_DEPLOYMENT="sqs-app"
+export SQS_TARGET_DEPLOYMENT="sqs-reader"
 export SQS_TARGET_NAMESPACE="keda-test"
 
 # echo colour
