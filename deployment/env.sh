@@ -21,7 +21,7 @@ export IAM_KEDA_SQS_POLICY="keda-demo-sqs"
 export IAM_KEDA_DYNAMO_POLICY="keda-demo-dynamo"
 export SQS_QUEUE_NAME="keda-demo-queue.fifo"
 export SQS_QUEUE_URL="https://sqs.${AWS_REGION}.amazonaws.com/${ACCOUNT_ID}/${SQS_QUEUE_NAME}"
-export SQS_TARGET_DEPLOYMENT="sqs-reader"
+export SQS_TARGET_DEPLOYMENT="sqs-app"
 export SQS_TARGET_NAMESPACE="keda-test"
 
 # echo colour

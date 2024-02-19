@@ -11,9 +11,6 @@ source ./deployment/env.sh
 
 echo "${RED}Casesenstive ${BLUE} Press Y = Proceed \n or \n N = Cancel (change context 'kubectl config use-context {context name you can check using kubectl config view}' and run script)"
 read user_input
-#kubectl config use-context akaasif-Isengard@${CLUSTER_NAME}.${AWS_REGION}.eksctl.io
-#kubectl config current-context
-#kubectl config use-context akaasif-Isengard@eks-karpenter-scale.us-west-1.eksctl.io
 
 Entry='Y'
 if [[ "$user_input" == *"$Entry"* ]]; then
