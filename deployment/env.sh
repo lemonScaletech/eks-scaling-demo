@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "Setting environment variables"
 #Shared Variables
-export AWS_REGION="us-east-1"
+export AWS_REGION="us-west-1"
 export ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 export TEMPOUT=$(mktemp)
 export DYNAMODB_TABLE="payments"

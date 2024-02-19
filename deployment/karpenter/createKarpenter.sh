@@ -7,7 +7,7 @@ echo "${GREEN}=========================="
 echo "${GREEN}Installing karpenter"
 echo "${GREEN}=========================="
 
-source ./deployment/environmentVariables.sh
+source ./deployment/env.sh
 
 echo "${RED}Casesenstive ${BLUE} Press Y = Proceed \n or \n N = Cancel (change context 'kubectl config use-context {context name you can check using kubectl config view}' and run script)"
 read user_input
@@ -19,7 +19,7 @@ Entry='Y'
 if [[ "$user_input" == *"$Entry"* ]]; then
 
 if [ -z $CLUSTER_NAME ] || [ -z $KARPENTER_VERSION ] || [ -z $AWS_REGION ] || [ -z $ACCOUNT_ID ] || [ -z $TEMPOUT ];then
-echo "${RED}Update values & Run environmentVariables.sh file"
+echo "${RED}Update values & Run env.sh file"
 exit 1;
 else
 echo "${GREEN}**Installing karpenter**"

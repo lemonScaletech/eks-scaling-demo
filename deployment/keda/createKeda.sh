@@ -5,7 +5,7 @@
 echo "${GREEN}=========================="
 echo "${GREEN}Deploy KEDA"
 echo "${GREEN}=========================="
-source ./deployment/environmentVariables.sh
+source ./deployment/env.sh
 
 echo "${RED} Keda will be deployed on cluster $(kubectl config current-context) \n ${RED}Casesenstive ${BLUE}Press Y = Proceed or N = Cancel (change context and run script)"
 read user_input
@@ -17,7 +17,7 @@ OIDC_PROVIDER=$(aws eks describe-cluster --name ${CLUSTER_NAME} --region ${AWS_R
 echo "${CYAN}This deployment will target AWS SQS trigger for keda"
 
 if [ -z $CLUSTER_NAME ] ||  [ -z $AWS_REGION ] || [ -z $IAM_KEDA_SQS_POLICY ] || [ -z $IAM_KEDA_DYNAMO_POLICY ] || [ -z $ACCOUNT_ID ] || [ -z $TEMPOUT ] || [ -z $OIDC_PROVIDER ] || [ -z $IAM_KEDA_ROLE ] || [ -z $SERVICE_ACCOUNT ] || [ -z $NAMESPACE ] || [ -z $SQS_TARGET_NAMESPACE ] || [ -z $SQS_TARGET_DEPLOYMENT ] || [ -z $SQS_QUEUE_URL ];then
-echo "${RED}Update values & Run environmentVariables.sh file"
+echo "${RED}Update values & Run env.sh file"
 exit 1;
 else
 
