@@ -107,8 +107,31 @@ spec:
         - key: node.kubernetes.io/instance-type
           operator: In
           values: ["m5.xlarge", "m5.2xlarge"]
+#       - key: "karpenter.k8s.aws/instance-category"
+#         operator: In
+#         values: ["c", "m", "r"]
+#       - key: "karpenter.k8s.aws/instance-cpu"
+#         operator: In
+#         values: ["4", "8", "16", "32"]
+#       - key: "karpenter.k8s.aws/instance-hypervisor"
+#         operator: In
+#         values: ["nitro"]
+#       - key: "karpenter.k8s.aws/instance-generation"
+#         operator: Gt
+#         values: ["2"]
+#       - key: "topology.kubernetes.io/zone"
+#         operator: In
+#         values: ["us-west-2a", "us-west-2b"]
+#       - key: "kubernetes.io/arch"
+#         operator: In
+#         values: ["arm64", "amd64"]
+#       - key: "karpenter.sh/capacity-type"
+#         operator: In
+#         values: ["spot", "on-demand"]
       nodeClassRef:
         name: default
+  # Resource limits constrain the total size of the cluster.
+  # Limits prevent Karpenter from creating new instances once the limit is exceeded.
   limits:
     cpu: 1000
   disruption:
